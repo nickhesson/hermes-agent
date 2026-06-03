@@ -1348,6 +1348,23 @@ class AIAgent:
         from agent.background_review import summarize_background_review_actions
         return summarize_background_review_actions(review_messages, prior_snapshot)
 
+    def _suppress_background_review_for_current_turn(self) -> bool:
+        """Return True when best-effort review must not outlive this turn.
+
+        Parseable CLI one-shots (`hermes chat -Q` and `hermes_cli.oneshot`)
+        print a machine-readable response and then immediately enter process
+        teardown. Spawning a daemon background review there can race provider
+        and runtime shutdown after the user-visible work already succeeded.
+
+        Keep normal interactive CLI/gateway behavior intact; only suppress the
+        parseable quiet CLI path that explicitly hides status output.
+        """
+        return (
+            bool(getattr(self, "quiet_mode", False))
+            and bool(getattr(self, "suppress_status_output", False))
+            and (getattr(self, "platform", None) or "") == "cli"
+        )
+
     def _spawn_background_review(
         self,
         messages_snapshot: List[Dict],

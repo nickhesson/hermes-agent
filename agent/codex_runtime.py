@@ -151,6 +151,7 @@ def run_codex_app_server_turn(
         turn.final_text
         and not turn.interrupted
         and (should_review_memory or should_review_skills)
+        and not agent._suppress_background_review_for_current_turn()
     ):
         try:
             agent._spawn_background_review(
